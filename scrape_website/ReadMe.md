@@ -1,0 +1,4 @@
+- pip install -r requirements.txt
+- Copy sample_settings.py to settings.py
+- In settings.py, replace ScraperParams.URL with website you want to scrape and ScraperParams.namespace with a unique string name for the website. Example values: URL="https://drmalpani.com", namespace="drmalpani".
+- Now execute main.py
