@@ -1,0 +1,9 @@
+html2text
+undetected_chromedriver
+googlesearch-python
+beautifulsoup4
+readability-lxml
+selenium
+webdriver-manager
+openai
+pinecone-client
