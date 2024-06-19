@@ -18,6 +18,20 @@ chromedriver = ChromeDriverManager().install()
 global_driver = None
 
 
+def read_sitemap(sitemap_url):
+    site_urls = []
+
+    r = requests.get(sitemap_url)
+    xml = r.text
+
+    soup = BeautifulSoup(xml, "lxml")
+    sitemap_tags = soup.find_all("loc")
+
+    for location in sitemap_tags:
+        site_urls.append(location.text)
+    return site_urls
+
+
 def get_stealth_chromedriver():
     options = uc.ChromeOptions()
     # options.headless = True
@@ -269,5 +283,7 @@ def main():
     print(main_text_content)
 
 
-if __name__ == "__main__":
-    main()
+# read_sitemap("https://drmalpani.com/sitemap.xml")
+
+# if __name__ == "__main__":
+#     main()

@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 import insert_raw_sheet
 from scraper import extract_main_text_content_w_formatting, extract_main_text_content_raw, \
-    get_html_content_using_selenium
+    get_html_content_using_selenium, read_sitemap
 
 maxInt = sys.maxsize
 
@@ -80,6 +80,60 @@ def is_allowed(url, rp):
     if not rp:
         return True
     return rp.can_fetch("*", url)
+
+
+def crawl_website_sitemap(sitemap_url, visited=None):
+    global context_id, count, webpage_count, website_data
+
+    site_urls = read_sitemap(sitemap_url)
+
+    for url in site_urls:
+
+        try:
+            url = normalize_url(url)
+        except:
+            pass
+
+        if visited is None:
+            visited = set()
+
+        for idx, x in enumerate(website_data):
+            if url == x["url"]:
+                visited.add(url)
+                webpage_count += 1
+                context_id += 1
+
+                del website_data[idx]
+                break
+
+        if url in visited:
+            continue
+
+        visited.add(url)
+        webpage_count += 1
+
+        try:
+            # html_content = HTML code of body tag.
+            # raw_html_content = All Text inside body tag
+            # readable_raw_content = Entire HTML code
+            # html_code, body_code, raw_html_content, readable_raw_content = get_html_content(url, True)
+            soup_object, body_code, raw_html_content, html_code = get_html_content_using_selenium(url)
+            # readable_content = Readable content of the webpage (May skip most of the page content)
+            readable_content = extract_main_text_content_raw(html_code)
+            # Array of website content fetched using a complex logic.
+            main_text_content = extract_main_text_content_w_formatting(root_endpoint, body_code, url)
+            main_text_content_combined = ""
+            for k in main_text_content:
+                main_text_content_combined += k.strip() + "\n---x---\n"
+            print("URL confirmed: ", url)
+            save_to_csv(
+                {"url": url, "context_id": context_id, "content": main_text_content_combined, "html_code": html_code,
+                 "raw_html_content": raw_html_content, "readable_content": readable_content, "depth": -1})
+
+            context_id += 1
+        except Exception as e:
+            print("ERROR at url:", url)
+            traceback.print_exc()
 
 
 def crawl_website(url, max_depth=3, current_depth=1, visited=None, robots_txt_url=None, rp=None):
@@ -179,6 +233,17 @@ def read_csv_to_list_of_dicts(file_path):
         for row in reader:
             data.append(row)
     return data
+
+
+def scrape_website_using_sitemap(website_url, sitemap_url, output_csv):
+    global max_webpages, root_endpoint, driver, context_id, filename, website_data
+
+    filename = output_csv + "_raw.csv"
+    website_data = read_csv_to_list_of_dicts(filename)
+
+    root_endpoint = website_url
+
+    crawl_website_sitemap(sitemap_url, set())
 
 
 def scrape_website(url, max_depth, num_pages, output_csv, pinecone_index, only_scrape=False):
